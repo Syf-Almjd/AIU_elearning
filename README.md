@@ -1,3 +1,7 @@
+![6](https://github.com/Syf-Almjd/AIU_elearning/assets/70374999/47b38fcf-22f6-4971-b6f2-94145a4eb692)
+![Uploading 5.png…]()
+![Uploading 4.png…]()
+![Uploading 3.png…]()
 # aiu_elearning
 
 AIU E_Learn Platform
@@ -23,3 +27,8 @@ The AIU E-Learning Platform is a cutting-edge and comprehensive mobile applicati
 8. **Continuous Updates:** The app is regularly updated with new courses, features, and improvements based on user feedback and emerging trends in education and technology.
 
 The AIU E-Learning Platform is committed to democratizing education and empowering learners worldwide to explore their interests, expand their horizons, and unlock their full potential. With its intelligent and dynamic learning ecosystem, the app aims to foster a lifelong love for learning and provide a gateway to a brighter future.
+
+
+![Uploading 2.png…]()
+![Uploading 7.png…]()
+
