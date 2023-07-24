@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import 'MyHomePage.dart';
 
@@ -15,26 +16,29 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  late bool isConnected;
+  bool isConnected = true;
   late StreamSubscription<InternetConnectionStatus> connectionSubscription;
 
   @override
   void initState() {
+    Internet();
     super.initState();
-    isConnected = false;
+  }
+
+  Future<bool> Internet() async {
     connectionSubscription =
-        InternetConnectionChecker().onStatusChange.listen((status) {
+        await InternetConnectionChecker().onStatusChange.listen((status) {
+      switch (status) {
+        case InternetConnectionStatus.connected:
           setState(() {
-            switch (status) {
-              case InternetConnectionStatus.connected:
-                isConnected = true;
-                break;
-              case InternetConnectionStatus.disconnected:
-                isConnected = false;
-                break;
-            }
+            isConnected = true;
           });
-        });
+        case InternetConnectionStatus.disconnected:
+          isConnected = false;
+          break;
+      }
+    });
+    return isConnected;
   }
 
   @override
@@ -55,20 +59,44 @@ class _MyAppState extends State<MyApp> {
       home: isConnected
           ? MyHomePage()
           : Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Image(image: AssetImage("assets/nodata.png")),
-              Text(
-                'You are disconnected from the internet.\nStay connected to continue!',
-                textAlign: TextAlign.center,
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Image(image: AssetImage("assets/nodata.png")),
+                    SizedBox(
+                      height: 10,
+                      width: 10,
+                    ),
+                    Text(
+                      'You are disconnected from the internet.\nStay connected to continue!',
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(
+                      height: 50,
+                      width: 50,
+                    ),
+                    LoadingAnimationWidget.waveDots(
+                        color: isConnected ? Colors.green : Colors.red,
+                        size: 50),
+                    SizedBox(
+                      height: 10,
+                      width: 10,
+                    ),
+                    Text(
+                      isConnected
+                          ? "Connected, Please Wait"
+                          : "No Connection! Trying to connect again..",
+                      style: TextStyle(
+                          color: isConnected ? Colors.green : Colors.red,
+                          fontSize: 12),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }
