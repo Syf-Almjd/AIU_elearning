@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:flutter_webview_pro/webview_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'dart:async';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_webview_pro/webview_flutter.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
@@ -22,50 +23,55 @@ class _MyHomePageState extends State<MyHomePage> {
       child: WillPopScope(
         onWillPop: _goBack,
         child: Scaffold(
-          body: Stack(
-            children: [
-              WebView(
-                initialUrl: "https://elearning.aiu.edu.my/",
-                javascriptMode: JavascriptMode.unrestricted,
-                onWebViewCreated: (WebViewController webViewController) {
-                  _webViewController = webViewController;
-                },
-                allowsInlineMediaPlayback: true,
-                gestureNavigationEnabled: true,
-                zoomEnabled: true,
-                navigationDelegate: (NavigationRequest request) async {
-                  if (request.url.contains(".pdf") || request.url.contains(".pptx")) {
-                    var url = await Uri.parse(request.url);
-                    launchUrl(url, mode: LaunchMode.externalApplication,);
-
+          body: Container(
+            child: Stack(
+              children: [
+                WebView(
+                  initialUrl: "https://elearning.aiu.edu.my/",
+                  javascriptMode: JavascriptMode.unrestricted,
+                  onWebViewCreated: (WebViewController webViewController) {
+                    _webViewController = webViewController;
+                  },
+                  allowsInlineMediaPlayback: true,
+                  gestureNavigationEnabled: true,
+                  zoomEnabled: true,
+                  navigationDelegate: (NavigationRequest request) async {
+                    if (request.url.contains(".pdf") ||
+                        request.url.contains(".pptx")) {
+                      var url = await Uri.parse(request.url);
+                      launchUrl(
+                        url,
+                        mode: LaunchMode.externalApplication,
+                      );
+                      return NavigationDecision.prevent;
+                    }
+                    if (request.url.contains("aiu.edu.my")) {
+                      return NavigationDecision.navigate;
+                    }
                     return NavigationDecision.prevent;
-                  }
-                  if (request.url.contains("aiu.edu.my")) {
-                    return NavigationDecision.navigate;
-                  }
-                  return NavigationDecision.navigate;
-                },
-                onPageStarted: (url) {
-                  print("started loading");
-                  setState(() {
-                    isLoading = true;
-                  });
-                },
-                onPageFinished: (url) {
-                  print("finished loading");
-                  setState(() {
-                    isLoading = false;
-                  });
-                },
-                onProgress: (progress) {
-                  print("done $progress");
-                  setState(() {
-                    progressBar = progress;
-                  });
-                },
-              ),
-              if (isLoading) loading(),
-            ],
+                  },
+                  onPageStarted: (url) {
+                    print("started loading");
+                    setState(() {
+                      isLoading = true;
+                    });
+                  },
+                  onPageFinished: (url) {
+                    print("finished loading");
+                    setState(() {
+                      isLoading = false;
+                    });
+                  },
+                  onProgress: (progress) {
+                    print("done $progress");
+                    setState(() {
+                      progressBar = progress;
+                    });
+                  },
+                ),
+                if (isLoading) loading(),
+              ],
+            ),
           ),
         ),
       ),
@@ -94,9 +100,9 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<bool> _goBack() async {
-      if (await _webViewController.canGoBack()) {
-    _webViewController.goBack();
-    return false;
+    if (await _webViewController.canGoBack()) {
+      _webViewController.goBack();
+      return false;
     }
     return true;
   }
