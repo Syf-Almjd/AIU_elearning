@@ -29,6 +29,7 @@ flutter:
   assets:
     - assets/logo.png
     - assets/nodata.png
+    - shorebird.yaml
 
 
 
