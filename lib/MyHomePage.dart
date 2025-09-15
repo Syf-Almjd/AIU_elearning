@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_webview_pro/webview_flutter.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key}) : super(key: key);
+  const MyHomePage({super.key});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -15,63 +15,68 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   bool isLoading = true;
   int progressBar = 0;
-  late WebViewController _webViewController;
+  late final WebViewController _webViewController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _webViewController = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {
+            setState(() {
+              progressBar = progress;
+            });
+          },
+          onPageStarted: (String url) {
+            setState(() {
+              isLoading = true;
+            });
+          },
+          onPageFinished: (String url) {
+            setState(() {
+              isLoading = false;
+            });
+          },
+          onNavigationRequest: (NavigationRequest request) async {
+            if (request.url.contains(".pdf") || request.url.contains(".pptx")) {
+              var url = Uri.parse(request.url);
+              launchUrl(
+                url,
+                mode: LaunchMode.externalApplication,
+              );
+              return NavigationDecision.prevent;
+            }
+            if (request.url.contains("aiu.edu.my")) {
+              return NavigationDecision.navigate;
+            }
+            return NavigationDecision.prevent;
+          },
+          onHttpError: (HttpResponseError error) {},
+          onWebResourceError: (WebResourceError error) {},
+        ),
+      )
+      ..enableZoom(true)
+      ..loadRequest(Uri.parse("https://elearning.aiu.edu.my/"));
+  }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: WillPopScope(
-        onWillPop: _goBack,
+      child: PopScope(
+        canPop: false,
+        onPopInvoked: (didPop) async {
+          if (didPop) return;
+          await _goBack();
+        },
         child: Scaffold(
-          body: Container(
-            child: Stack(
-              children: [
-                WebView(
-                  initialUrl: "https://elearning.aiu.edu.my/",
-                  javascriptMode: JavascriptMode.unrestricted,
-                  onWebViewCreated: (WebViewController webViewController) {
-                    _webViewController = webViewController;
-                  },
-                  allowsInlineMediaPlayback: true,
-                  gestureNavigationEnabled: true,
-                  zoomEnabled: true,
-                  navigationDelegate: (NavigationRequest request) async {
-                    if (request.url.contains(".pdf") ||
-                        request.url.contains(".pptx")) {
-                      var url = await Uri.parse(request.url);
-                      launchUrl(
-                        url,
-                        mode: LaunchMode.externalApplication,
-                      );
-                      return NavigationDecision.prevent;
-                    }
-                    if (request.url.contains("aiu.edu.my")) {
-                      return NavigationDecision.navigate;
-                    }
-                    return NavigationDecision.prevent;
-                  },
-                  onPageStarted: (url) {
-                    print("started loading");
-                    setState(() {
-                      isLoading = true;
-                    });
-                  },
-                  onPageFinished: (url) {
-                    print("finished loading");
-                    setState(() {
-                      isLoading = false;
-                    });
-                  },
-                  onProgress: (progress) {
-                    print("done $progress");
-                    setState(() {
-                      progressBar = progress;
-                    });
-                  },
-                ),
-                if (isLoading) loading(),
-              ],
-            ),
+          body: Stack(
+            children: [
+              WebViewWidget(controller: _webViewController),
+              if (isLoading) loading(),
+            ],
           ),
         ),
       ),
@@ -85,25 +90,32 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.end,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            LoadingAnimationWidget.flickr(leftDotColor: Colors.blue, rightDotColor: Colors.green, size: 60),
-            SizedBox(height: 20),
-            Text(
-              "Progress $progressBar",
-              style: TextStyle(color: Colors.blue, fontSize: 12),
+            LoadingAnimationWidget.flickr(
+              leftDotColor: Colors.blue,
+              rightDotColor: Colors.green,
+              size: 60,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
+            Text(
+              "Progress $progressBar%",
+              style: const TextStyle(color: Colors.blue, fontSize: 12),
+            ),
+            const SizedBox(height: 20),
           ],
         ),
       );
     }
-    return SizedBox.shrink();
+    return const SizedBox.shrink();
   }
 
-  Future<bool> _goBack() async {
+  Future<void> _goBack() async {
     if (await _webViewController.canGoBack()) {
-      _webViewController.goBack();
-      return false;
+      await _webViewController.goBack();
+    } else {
+      // If can't go back, exit the app or show dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
     }
-    return true;
   }
 }

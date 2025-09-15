@@ -9,16 +9,18 @@ import 'MyHomePage.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
   @override
   _MyAppState createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  Map _source = {ConnectivityResult.none: false};
+  Map<ConnectivityResult, bool> _source = {ConnectivityResult.none: false};
   final MyConnectivity _connectivity = MyConnectivity.instance;
 
   @override
@@ -26,7 +28,9 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     _connectivity.initialise();
     _connectivity.myStream.listen((source) {
-      setState(() => _source = source);
+      if (mounted) {
+        setState(() => _source = source);
+      }
     });
   }
 
@@ -38,18 +42,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    bool isConnected = false;
-    switch (_source.keys.toList()[0]) {
-      case ConnectivityResult.mobile:
-        isConnected = true;
-        break;
-      case ConnectivityResult.wifi:
-        isConnected = true;
-        break;
-      case ConnectivityResult.none:
-      default:
-        isConnected = false;
-    }
+    bool isConnected = _source.values.isNotEmpty ? _source.values.first : false;
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -59,33 +52,24 @@ class _MyAppState extends State<MyApp> {
         useMaterial3: true,
       ),
       home: isConnected
-          ? MyHomePage()
+          ? const MyHomePage()
           : Scaffold(
               body: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Image(image: AssetImage("assets/nodata.png")),
-                    SizedBox(
-                      height: 10,
-                      width: 10,
-                    ),
-                    Text(
+                    const Image(image: AssetImage("assets/nodata.png")),
+                    const SizedBox(height: 10),
+                    const Text(
                       'You are disconnected from the internet.\nStay connected to continue!',
                       textAlign: TextAlign.center,
                     ),
-                    SizedBox(
-                      height: 50,
-                      width: 50,
-                    ),
+                    const SizedBox(height: 50),
                     LoadingAnimationWidget.waveDots(
                         color: isConnected ? Colors.green : Colors.red,
                         size: 50),
-                    SizedBox(
-                      height: 10,
-                      width: 10,
-                    ),
+                    const SizedBox(height: 10),
                     Text(
                       isConnected
                           ? "Connected, Please Wait"
@@ -107,31 +91,39 @@ class MyConnectivity {
   MyConnectivity._();
 
   static final _instance = MyConnectivity._();
-
   static MyConnectivity get instance => _instance;
-  final _connectivity = Connectivity();
-  final _controller = StreamController.broadcast();
 
-  Stream get myStream => _controller.stream;
+  final _connectivity = Connectivity();
+  final _controller =
+      StreamController<Map<ConnectivityResult, bool>>.broadcast();
+
+  Stream<Map<ConnectivityResult, bool>> get myStream => _controller.stream;
 
   void initialise() async {
-    ConnectivityResult result = await _connectivity.checkConnectivity();
-    _checkStatus(result);
-    _connectivity.onConnectivityChanged.listen((result) {
-      _checkStatus(result);
+    List<ConnectivityResult> results = await _connectivity.checkConnectivity();
+    _checkStatus(results.isNotEmpty ? results.first : ConnectivityResult.none);
+
+    _connectivity.onConnectivityChanged
+        .listen((List<ConnectivityResult> results) {
+      _checkStatus(
+          results.isNotEmpty ? results.first : ConnectivityResult.none);
     });
   }
 
   void _checkStatus(ConnectivityResult result) async {
     bool isOnline = false;
     try {
-      final result =
-          await InternetAddress.lookup('https://elearning.aiu.edu.my/');
-      isOnline = result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+      // Use a proper hostname, not a full URL
+      final lookupResult = await InternetAddress.lookup('elearning.aiu.edu.my');
+      isOnline =
+          lookupResult.isNotEmpty && lookupResult[0].rawAddress.isNotEmpty;
     } on SocketException catch (_) {
       isOnline = false;
     }
-    _controller.sink.add({result: isOnline});
+
+    if (!_controller.isClosed) {
+      _controller.sink.add({result: isOnline});
+    }
   }
 
   void disposeStream() => _controller.close();

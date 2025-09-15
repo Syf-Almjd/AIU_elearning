@@ -1,7 +1,7 @@
-name: aiu_elearn
+name: aiu_elearning
 description: Albukhary International University
 
-version: 2.0.0+7
+version: 2.8.0+8
 
 environment:
   sdk: '>=3.0.1 <4.0.0'
@@ -9,24 +9,19 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.5
-  loading_animation_widget: ^1.2.0+4
-  flutter_webview_pro: ^3.0.1+4
-  url_launcher: ^6.1.12
-  connectivity_plus: ^4.0.1
-
+  cupertino_icons: ^1.0.8
+  loading_animation_widget: ^1.2.1
+  webview_flutter: ^4.8.0
+  url_launcher: ^6.3.1
+  dart_secure: ^0.6.2
+  connectivity_plus: ^7.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_lints: ^4.0.0
   flutter_launcher_icons: "^0.12.0"
 
-flutter_icons:
-  android: true
-  ios: true
-  image_path: "assets/logo.png"
-
-  flutter_lints: ^2.0.2
 
 flutter:
   uses-material-design: true
@@ -34,3 +29,16 @@ flutter:
   assets:
     - assets/logo.png
     - assets/nodata.png
+
+
+
+#dart run flutter_launcher_icons
+flutter_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path:  "assets/logo.png"
+  min_sdk_android: 23 # android min sdk min:16, default 21
+  web:
+    generate: true
+    image_path: "assets/logo.png"
+
